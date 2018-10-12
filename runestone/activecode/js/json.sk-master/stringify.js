@@ -14,6 +14,25 @@ module.exports = function (obj, opts) {
         };
     })(opts.cmp);
     
+    var indent = typeof opts.space === 'number';
+    var indentChar = '';
+    if (typeof opts.space === 'number') {
+        for (var i = 0; i < opts.space; i += 1) {
+            indentChar += ' ';
+        }
+    }
+    var indentLevel = 0;
+    var nlii = indent ? '\n' : ''; // newline if indent
+    var spii = indent ? ' ' : ''; // space if indent
+    var currNewlineIndent='';
+    function updateCurrentNewlineIndent() {
+        if(indent) {
+            currNewlineIndent = '';
+            for (var i = 0; i<indentLevel; i++) {
+                currNewlineIndent += indentChar;
+            }
+        }
+    }
     return (function stringify (node) {
         if (typeof node !== 'object' || node === null) {
             return json.stringify(node);
@@ -23,16 +42,20 @@ module.exports = function (obj, opts) {
             for (var i = 0; i < node.length; i++) {
                 out.push(stringify(node[i]));
             }
-            return '[' + out.join(',') + ']';
+            return '[' + spii + out.join(',' + spii) + spii + ']';
         }
         else {
             var keys = objectKeys(node).sort(cmp && cmp(node));
             var out = [];
+            indentLevel++;
+            updateCurrentNewlineIndent();
             for (var i = 0; i < keys.length; i++) {
                 var key = keys[i];
-                out.push(stringify(key) + ':' + stringify(node[key]));
+                out.push(currNewlineIndent + stringify(key) + ':' + spii + stringify(node[key]));
             }
-            return '{' + out.join(',') + '}';
+            indentLevel--;
+            updateCurrentNewlineIndent();
+            return '{' + nlii + out.join(',' + nlii) + nlii + currNewlineIndent + '}';
         }
     })(obj);
 };
