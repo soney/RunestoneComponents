@@ -89,6 +89,7 @@ ActiveCode.prototype.init = function(opts) {
     }
     this.addCaption();
     this.addJSONLibrary();
+    this.addREQUESTSLibrary();
 
     if (this.autorun) {
         $(document).ready(this.runProg.bind(this));
@@ -787,6 +788,20 @@ ActiveCode.prototype.addJSONLibrary = function () {
     } else {
         Sk.externalLibraries = {
             json: jsonExternalLibInfo
+        };
+    }
+};
+
+ActiveCode.prototype.addREQUESTSLibrary = function () {
+    var libInfo = {
+            path : eBookConfig.app + '/static/' + eBookConfig.course + '/_static/TEMP/__init__.py',
+            dependencies : []
+        };
+    if (Sk.externalLibraries) {
+        Sk.externalLibraries.requests = libInfo;
+    } else {
+        Sk.externalLibraries = {
+            requests: libInfo
         };
     }
 };
