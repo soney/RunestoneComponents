@@ -90,6 +90,8 @@ ActiveCode.prototype.init = function(opts) {
     }
     this.addCaption();
     this.addJSONLibrary();
+    this.addREQUESTSLibrary();
+    this.addCACHINGLibrary();
 
     if (this.autorun) {
         $(document).ready(this.runProg.bind(this));
@@ -838,6 +840,34 @@ ActiveCode.prototype.addJSONLibrary = function () {
     } else {
         Sk.externalLibraries = {
             json: jsonExternalLibInfo
+        };
+    }
+};
+
+ActiveCode.prototype.addREQUESTSLibrary = function () {
+    var libInfo = {
+            path : eBookConfig.app + '/static/' + eBookConfig.course + '/_static/requests/__init__.py',
+            dependencies : []
+        };
+    if (Sk.externalLibraries) {
+        Sk.externalLibraries.requests = libInfo;
+    } else {
+        Sk.externalLibraries = {
+            requests: libInfo
+        };
+    }
+};
+
+ActiveCode.prototype.addCACHINGLibrary = function () {
+    var libInfo = {
+            path : eBookConfig.app + '/static/' + eBookConfig.course + '/_static/requests_with_caching/__init__.py',
+            dependencies : []
+        };
+    if (Sk.externalLibraries) {
+        Sk.externalLibraries.requests_with_caching = libInfo;
+    } else {
+        Sk.externalLibraries = {
+            requests_with_caching: libInfo
         };
     }
 };
