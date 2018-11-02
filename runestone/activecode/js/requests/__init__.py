@@ -8,15 +8,13 @@ Decode and Encode are not available in Runestone, so there might be
 issues with reponses.
 Does not use the status attribute for urlopen, would be nice to have
 that back.
-Does not work on regular web pages (like google or the michigan daily).
-Might be because it returns binary data, and can't be converted to a
-string because we can't use encode/decode.
+Does not work on regular web pages (like google or the michigan daily) because of cross-site scripting limits.
 """
 from urllib.request import urlopen
 import json
 
-class Response:
 
+class Response:
     def __init__(self, data, url):
         self.text = data
         self.url = url
@@ -25,32 +23,64 @@ class Response:
         return json.loads(self.text)
 
     def __str__(self):
-        return "A response object for the following request: {}".format(self.request_url)
+        return "<A Response object for the following request: {}>".format(self.url)
 
 
-def requestURL(baseurl, params = {}):
-    if len(params) == 0:
-        return baseurl
-    complete_url = baseurl + "?"
-    pairs = [str(pair) + "=" + str(params[pair]).replace(" ", "+") for pair in params]
-    complete_url += "&".join(pairs)
-    return complete_url
+url_subs = {" ": "%20",
+            "!": "%21",
+            '"': "%22",
+            "#": "%23",
+            "$": "%24",
+            "'": "%27",
+            "(": "%28",
+            ")": "%29",
+            "*": "%2A",
+            "+": "%2B",
+            ",": "%2C",
+            "/": "%2F",
+            ":": "%3A",
+            ";": "%3B",
+            "=": "%3D",
+            "?": "%3F",
+            "@": "%40",
+            "[": "%5B",
+            "]": "%5D",
+            }
 
-def get(baseurl, params = {}):
+def _subst(s, substitutions=url_subs):
+    res = ""
+    for c in s:
+        if c in substitutions:
+            res += substitutions[c]
+        else:
+            res += c
+    return res
+
+
+def requestURL(baseurl, params={}):
+    try:
+        if len(params) == 0:
+            return baseurl
+        complete_url = baseurl + "?"
+        pairs = ["{}={}".format(_subst(k), _subst(params[k])) for k in params]
+        complete_url += "&".join(pairs)
+        return complete_url
+    except:
+        return None
+
+
+def get(baseurl, params={}):
     user_req = requestURL(baseurl, params)
-    data = urlopen(user_req)
-    text_data = data.read().strip()
-    if len(text_data) > 0:
-        user_resp_obj = Response(text_data, user_req)
-        return user_resp_obj
+    if user_req:
+        data = urlopen(user_req)
+        text_data = data.read().strip()
+        if len(text_data) == 0:
+            text_data = "Failed to retrieve that URL"
+        if len(text_data) > 0:
+            user_resp_obj = Response(text_data, user_req)
     else:
-        # Right now I'm returning a string because
-        # when I have this activecode window included
-        # in the windows above, it will not pass on the
-        # exception, and instead say that there is a
-        # problem in another window. Not sure what the best
-        # way around that is.
+        text_data = "<html><body><h1>invalid request</h1></body></html>"
+        user_req = "Couldn’t generate a valid URL"
+    return Response(text_data, user_req)
 
 
-        return "requests.exceptions.ConnectionError: HTTPConnectionPool(host='{}', port=80): Max retries exceeded with url: /bat?key=val (Caused by <class 'socket.gaierror'>: [Errno 11004] getaddrinfo failed)".format(baseurl)
-        #raise Exception("requests.exceptions.ConnectionError: HTTPConnectionPool(host='{}', port=80): Max retries exceeded with url: /bat?key=val (Caused by <class 'socket.gaierror'>: [Errno 11004] getaddrinfo failed)".format(baseurl))
