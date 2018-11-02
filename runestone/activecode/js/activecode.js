@@ -37,6 +37,7 @@ ActiveCode.prototype.init = function(opts) {
     this.hidecode = $(orig).data('hidecode');
     this.chatcodes = $(orig).data('chatcodes');
     this.hidehistory = $(orig).data('hidehistory');
+    this.tie = $(orig).data('tie')
     this.runButton = null;
     this.enabledownload = $(orig).data('enabledownload');
     this.downloadButton = null;
@@ -242,6 +243,16 @@ ActiveCode.prototype.createControls = function () {
         this.clButton = butt;
         ctrlDiv.appendChild(butt);
         $(butt).click(this.showCodelens.bind(this));
+    }
+
+    // TIE
+    if(this.tie) {
+        butt = document.createElement("button");
+        $(butt).addClass("ac_opt btn btn-default");
+        $(butt).text("Open Code Coach");
+        this.tieButt = butt;
+        ctrlDiv.appendChild(butt);
+        $(butt).click(this.showTIE.bind(this))
     }
     // CodeCoach
     // bnm - disable code coach until it is revamped  2017-7-22
@@ -688,6 +699,46 @@ ActiveCode.prototype.showCodeCoach = function () {
     });
 };
 
+ActiveCode.prototype.showTIE = function() {
+    var tieDiv = document.createElement("div");
+    $(this.tieButt).attr("disabled","disabled");
+    $(tieDiv).addClass("tie-container");
+    $(tieDiv).data("tie-id", this.divid)
+    var ifm = document.createElement('iframe')
+    $(ifm).addClass("tie-frame")
+    ifm.src = `https://tech-interview-exercises.appspot.com/client/question.html?qid=${this.tie}`
+
+    setIframeDimensions = function() {
+        $('.tie-container').css('width', $('.tie-container').parent().width());
+    //    $('.tie-frame').css('width', $('.tie-frame').parent().width() - 120);
+    };
+    ifm.onload = setIframeDimensions;
+    
+    $(function() {
+        $(window).resize(setIframeDimensions);
+      });
+
+    window.addEventListener('message', (function(evt) {
+        if (evt.origin != 'https://tech-interview-exercises.appspot.com') {
+          return;
+        }
+        // Handle the event accordingly.
+        // evt.data contains the code
+        this.logRunEvent({
+            'div_id': this.divid,
+            'code': JSON.parse(evt.data),
+            'lang': this.language,
+            'errinfo': 'TIEresult',
+            'to_save': true,
+            'prefix': this.pretext,
+            'suffix': this.suffix
+        });
+      }).bind(this), false)
+      this.logBookEvent({'event': 'tie', 'act': 'save', 'div_id': this.divid}); 
+
+    tieDiv.appendChild(ifm)
+    this.outerDiv.appendChild(tieDiv)
+}
 
 ActiveCode.prototype.toggleEditorVisibility = function () {
 
@@ -916,6 +967,26 @@ ActiveCode.prototype.filewriter = function(bytes, name, pos) {
     return current.length;
 }
 
+ActiveCode.prototype.getIncludedCode = function(divid) {
+    var wresult;
+    if(edList[divid]) {
+        return edList[divid].editor.getValue();
+    } else {
+        wresult = $.ajax({
+            async: false,
+            url: `/runestone/ajax/get_datafile?course_id=${eBookConfig.course}&acid=${divid}`,
+            success: function(data) {
+                result = JSON.parse(data).data;
+                },
+            error: function(err) {
+                result = null;
+            }})
+
+        return result;
+    }
+}
+
+
 ActiveCode.prototype.buildProg = function(useSuffix) {
     // assemble code from prefix, suffix, and editor for running.
     var pretext;
@@ -929,7 +1000,8 @@ ActiveCode.prototype.buildProg = function(useSuffix) {
 
         pretext = "";
         for (var x=0; x < this.includes.length; x++) {
-            pretext = pretext + edList[this.includes[x]].editor.getValue();
+            let iCode = this.getIncludedCode(this.includes[x]);
+            pretext = pretext + iCode;
         }
         this.pretext = pretext;
         if(this.pretext) {
@@ -1927,7 +1999,8 @@ LiveCode.prototype.runProg_callback = function(data) {
         var host, source, editor;
         var saveCode = "True";
         var sfilemap = {java: '', cpp: 'test.cpp', c: 'test.c', python3: 'test.py', python2: 'test.py'};
-
+        source = this.editor.getValue();
+        
         xhr = new XMLHttpRequest();
 
         host = this.JOBE_SERVER + this.resource;
