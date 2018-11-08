@@ -1101,7 +1101,7 @@ ActiveCode.prototype.runProg = function () {
         python3: this.python3,
         imageProxy: 'http://image.runestone.academy:8080/320x',
         inputfunTakesPrompt: true,
-        jsonpSites : ['https://itunes.apple.com'],
+        jsonpSites : ['https://itunes.apple.com', 'https://tastedive.com'],
     });
     Sk.divid = this.divid;
     this.setTimeLimit();

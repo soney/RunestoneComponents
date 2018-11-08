@@ -13,20 +13,22 @@ Does not work on regular web pages (like google or the michigan daily) because o
 from urllib.request import urlopen
 import json
 
-
 class Response:
     def __init__(self, data, url):
         self.text = data
         self.url = url
 
     def json(self):
-        return json.loads(self.text)
+        try:
+            return json.loads(self.text)
+        except:
+            return {"error": "Response not interpretable as json. Try printing the .text attribute"}
 
     def __str__(self):
         return "<A Response object for the following request: {}>".format(self.url)
 
 
-url_subs = {" ": "%20",
+url_subs = {" ": "+",
             "!": "%21",
             '"': "%22",
             "#": "%23",
@@ -49,7 +51,7 @@ url_subs = {" ": "%20",
 
 def _subst(s, substitutions=url_subs):
     res = ""
-    for c in s:
+    for c in str(s):
         if c in substitutions:
             res += substitutions[c]
         else:
@@ -68,19 +70,14 @@ def requestURL(baseurl, params={}):
     except:
         return None
 
-
 def get(baseurl, params={}):
-    user_req = requestURL(baseurl, params)
-    if user_req:
-        data = urlopen(user_req)
+    full_url = requestURL(baseurl, params)
+    if not full_url:
+        text_data = "<html><body><h1>invalid request</h1></body></html>"
+        full_url = "Couldn’t generate a valid URL"
+    else:
+        data = urlopen(full_url)
         text_data = data.read().strip()
         if len(text_data) == 0:
             text_data = "Failed to retrieve that URL"
-        if len(text_data) > 0:
-            user_resp_obj = Response(text_data, user_req)
-    else:
-        text_data = "<html><body><h1>invalid request</h1></body></html>"
-        user_req = "Couldn’t generate a valid URL"
-    return Response(text_data, user_req)
-
-
+    return Response(text_data, full_url)
