@@ -286,8 +286,8 @@ function addDelay(directive, action, delay) {
 $(document).ready(function() {
     if (eBookConfig && eBookConfig.useRunestoneServices) {
         $(document).ready(handleLoginLogout);
-        $(document).ready(getNumUsers);
-        $(document).ready(getOnlineUsers);
+        // $(document).ready(getNumUsers);
+        // $(document).ready(getOnlineUsers);
     } else {
         if (typeof eBookConfig === 'undefined') {
             console.log("eBookConfig is not defined.  This page must not be set up for Runestone");
