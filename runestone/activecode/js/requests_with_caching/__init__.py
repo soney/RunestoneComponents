@@ -24,7 +24,7 @@ def add_to_cache(cache_file, cache_key, cache_value):
 def clear_cache(cache_file=TEMP_CACHE_FNAME):
     _write_to_file({}, cache_file)
 
-def make_cache_key(baseurl, params_d, private_keys=["api_key"]):
+def make_cache_key(baseurl, params_d, private_keys=["api_key", "apikey"]):
     """Makes a long string representing the query.
     Alphabetize the keys from the params dictionary so we get the same order each time.
     Omit keys with private info."""
