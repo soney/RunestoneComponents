@@ -35,7 +35,7 @@ def make_cache_key(baseurl, params_d, private_keys=["api_key", "apikey"]):
             res.append("{}-{}".format(k, params_d[k]))
     return baseurl + "_".join(res)
 
-def get(baseurl, params={}, private_keys_to_ignore=["api_key"], permanent_cache_file=PERMANENT_CACHE_FNAME, temp_cache_file=TEMP_CACHE_FNAME):
+def get(baseurl, params={}, private_keys_to_ignore=["api_key", "apikey"], permanent_cache_file=PERMANENT_CACHE_FNAME, temp_cache_file=TEMP_CACHE_FNAME):
     full_url = requests.requestURL(baseurl, params)
     cache_key = make_cache_key(baseurl, params, private_keys_to_ignore)
     # Load the permanent and page-specific caches from files
