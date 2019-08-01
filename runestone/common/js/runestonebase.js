@@ -38,6 +38,7 @@ RunestoneBase.prototype.logBookEvent = function (eventInfo) {
                                       null, 'json');
     }
     console.log("logging event " + JSON.stringify(eventInfo));
+    pageProgressTracker.updateProgress(eventInfo.div_id);
     return post_return;
 };
 
@@ -60,6 +61,8 @@ RunestoneBase.prototype.logRunEvent = function (eventInfo) {
                 this.forceSave = true; }).bind(this))
     }
     console.log("running " + JSON.stringify(eventInfo));
+    pageProgressTracker.updateProgress(eventInfo.div_id);
+
 };
 
 /* Checking/loading from storage */
@@ -132,5 +135,5 @@ RunestoneBase.prototype.shouldUseServer = function (data) {
 
 // Return the key which to be used when accessing local storage.
 RunestoneBase.prototype.localStorageKey = function () {
-    return eBookConfig.email + ":" + this.divid + "-given";
+    return eBookConfig.email + ":" + eBookConfig.course + ":" + this.divid + "-given";
 }

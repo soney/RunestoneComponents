@@ -80,3 +80,91 @@ class ActiveCodeTests(RunestoneTestCase):
             self.assertLess(count, 20)
         except:
             print("WARNING - No response from JOBE server")
+
+    def test_activity_count(self):
+        self.driver.get(self.host + "/progresspage.html")
+        t2 = self.driver.find_element_by_id("test_p1")
+        self.assertIsNotNone(t2)
+        rb = t2.find_element_by_class_name("run-button")
+        self.assertIsNotNone(rb)
+        rb.click()
+        pb = self.driver.find_element_by_id("subchapterprogress")
+        self.assertIsNotNone(pb)
+        # Wait for the JS to run. Increase this delay if the next assertion fails.
+        time.sleep(1)
+        total = self.driver.find_element_by_id("scprogresstotal").text.strip()
+        self.assertEqual(2, int(total))
+        possible = self.driver.find_element_by_id("scprogressposs").text.strip()
+        # expect only 1 because the page isn't included when not using services
+        self.assertEqual(1, int(possible))
+        # count should not increment after a second click
+        rb.click()
+        total = self.driver.find_element_by_id("scprogresstotal").text.strip()
+        self.assertEqual(2, int(total))
+
+    def test_sql_activecode(self):
+        self.driver.get(self.host + "/index.html")
+        t2 = self.driver.find_element_by_id("sql1")
+        self.assertIsNotNone(t2)
+        time.sleep(1)
+        rb = t2.find_element_by_class_name("run-button")
+        self.assertIsNotNone(rb)
+        rb.click()
+        res = self.driver.find_element_by_id("sql1_sql_out")
+        self.assertIsNotNone(res)
+        trlist = res.find_elements_by_tag_name('tr')
+        self.assertEqual(6, len(trlist))
+        self.assertTrue("hello" in trlist[1].text)
+        out = self.driver.find_element_by_id("sql1_stdout")
+        self.assertTrue('You passed 2 out of 3 tests' in out.text)
+
+        t2 = self.driver.find_element_by_id("sql2")
+        self.assertIsNotNone(t2)
+        time.sleep(1)
+        rb = t2.find_element_by_class_name("run-button")
+        self.assertIsNotNone(rb)
+        rb.click()
+        out = self.driver.find_element_by_id("sql2_stdout")
+        self.assertEqual('',out.text.strip())
+
+
+    def test_readfiles(self):
+        self.driver.get(self.host + "/skulptfeatures.html")
+        t2 = self.driver.find_element_by_id("ac9_13_1")
+        self.assertIsNotNone(t2)
+        rb = t2.find_element_by_class_name("run-button")
+        self.assertIsNotNone(rb)
+        rb.click()
+        out = t2.find_element_by_id("ac9_13_1_stdout")
+        self.assertIsNotNone(out)
+        self.assertTrue('Lindenau' in out.text)
+
+
+    def test_altair(self):
+        self.driver.get(self.host + "/skulptfeatures.html")
+        t2 = self.driver.find_element_by_id("alt_kiva_bar1")
+        self.assertIsNotNone(t2)
+        rb = t2.find_element_by_class_name("run-button")
+        self.assertIsNotNone(rb)
+        rb.click()
+        out = t2.find_element_by_id("alt_kiva_bar1_stdout")
+        self.assertIsNotNone(out)
+        self.assertTrue("mark = bar" in out.text)
+        self.assertTrue("{'type': 'nominal', 'field': 'customer'}" in out.text)
+        can = t2.find_element_by_tag_name("canvas")
+        self.assertIsNotNone(can)
+
+    def test_image(self):
+        self.driver.get(self.host + "/skulptfeatures.html")
+        t2 = self.driver.find_element_by_id("ac14_7_2")
+        self.assertIsNotNone(t2)
+        rb = t2.find_element_by_class_name("run-button")
+        self.assertIsNotNone(rb)
+        rb.click()
+        out = t2.find_element_by_id("ac14_7_2_stdout")
+        self.assertIsNotNone(out)
+        self.assertTrue("400" in out.text)
+        self.assertTrue("244" in out.text)
+        self.assertTrue("165 161 158" in out.text)
+        can = t2.find_element_by_tag_name("canvas")
+        self.assertIsNotNone(can)

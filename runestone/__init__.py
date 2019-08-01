@@ -21,7 +21,7 @@ from .video import *
 from .webgldemo import *
 
 
-import os, sys
+import os, sys, socket
 
 def runestone_static_dirs():
     basedir = os.path.dirname(__file__)
@@ -31,17 +31,32 @@ def runestone_static_dirs():
     module_static_image = ['%s/images' % os.path.join(basedir,x) for x in module_paths if os.path.exists('%s/images' % os.path.join(basedir,x))]
     module_static_bootstrap = ['%s/bootstrap' % os.path.join(basedir,x) for x in module_paths if os.path.exists('%s/bootstrap' % os.path.join(basedir,x))]
 
-    return module_static_js + module_static_css + module_static_image + module_static_bootstrap
+    return (
+        module_static_js + module_static_css + module_static_image +
+        module_static_bootstrap +
+        [os.path.join(basedir, 'common/project_template/_static')]
+    )
 
 
 def runestone_extensions():
     basedir = os.path.dirname(__file__)
     module_paths = [ x for x in os.listdir(basedir) if os.path.isdir(os.path.join(basedir,x))]
     modules = [ 'runestone.{}'.format(x) for x in module_paths if os.path.exists('{}/__init__.py'.format(os.path.join(basedir,x)))]
-    modules.remove('runestone.server')
     # Place ``runestone.common`` first, so it can run init code needed by all other modules. This assumes that the first module in the list is run first. An alternative to this to guarantee this ordering is to call ``app.setup_extension('runestone.common')`` in every extension.
     modules.insert(0, modules.pop(modules.index('runestone.common')))
     return modules
+
+def get_master_url():
+    if socket.gethostname() in ['runestone-deploy', 'rsbuilder']:
+        master_url = 'https://runestone.academy'
+    elif 'RUNESTONE_HOST' in os.environ:
+        port = os.environ.get('RUNESTONE_PORT', 80)
+        secure = os.environ.get('RUNESTONE_PROTOCOL','http')
+        master_url = '{}://{}:{}'.format(secure, os.environ['RUNESTONE_HOST'], port)
+    else:
+        master_url = 'http://127.0.0.1:8000'
+
+    return master_url
 
 from paver.easy import task, cmdopts, sh
 from sphinxcontrib import paverutils
@@ -83,9 +98,9 @@ def build(options):
     rc = paverutils.run_sphinx(options,'build')
 
     if rc == 0 or rc is None:
-        print("Done, {} build successful".format(options.build.project_name))
+        print("Done, build successful")
     else:
-        print("Error in building {} code {}".format(options.build.project_name, rc))
+        print("Error in building code {}".format(rc))
 
     return rc
 

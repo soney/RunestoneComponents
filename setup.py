@@ -6,7 +6,7 @@ with open('requirements.txt', 'r') as fh:
 setup(
     name='runestone',
     description='Sphinx extensions for writing interactive documents.',
-    version='3.3.2',
+    version='4.0.3',
     author = 'Brad Miller',
     author_email = 'bonelake@mac.com',
     packages= find_packages(exclude=['*.*.test']),
@@ -17,7 +17,7 @@ setup(
     package_data = { '' : ['js/*.js', 'css/*.css', '*.txt']},
     license='GPL',
     url = 'https://github.com/RunestoneInteractive/RunestoneComponents',
-    download_url = 'https://github.com/RunestoneInteractive/RunestoneComponents/tarball/3.3.2',
+    download_url = 'https://github.com/RunestoneInteractive/RunestoneComponents/tarball/3.4.5',
     keywords = ['runestone', 'sphinx', 'ebook'], # arbitrary keywords
     classifiers=('Development Status :: 5 - Production/Stable',
                    'Environment :: Console',
@@ -30,16 +30,17 @@ setup(
                    'Operating System :: Unix',
                    'Programming Language :: Python',
                    'Programming Language :: Python :: 2.7',
-                   'Programming Language :: Python :: 3.6',
+                   'Programming Language :: Python :: 3.7',
                    'Topic :: Education',
                    'Topic :: Text Processing :: Markup'),
     # data_files=[('common',['runestone/common/*']),
     #             ('project/template', ['newproject_copy_me/*'])
     # ],
     long_description=open('README.rst').read(),
+    long_description_content_type='text/x-rst',
     entry_points = {
         'console_scripts': [
-            'runestone = runestone.__main__:main'
+            'runestone = runestone.__main__:cli'
         ]
         }
 )

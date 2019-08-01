@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 
 __author__ = 'bmiller'
 
@@ -22,7 +21,11 @@ import os.path
 from collections import OrderedDict
 import docutils
 from sqlalchemy import Table, select, and_, or_
-from runestone.server.componentdb import engine, meta
+from runestone.server.componentdb import engine, meta, sess
+from sphinx.util import logging
+
+logger = logging.getLogger(__name__)
+
 ignored_chapters = ["", "FrontBackMatter", "Appendices"]
 
 def setup(app):
@@ -39,29 +42,37 @@ def update_database(chaptitles, subtitles, skips, app):
     When the build is completely finished output the information gathered about
     chapters and subchapters into the database.
     """
-    if not engine:
-        print("You need to install a DBAPI module - psycopg2 for Postgres")
-        print("Or perhaps you have not set your DBURL environment variable")
+    if not sess:
+        logger.info("You need to install a DBAPI module - psycopg2 for Postgres")
+        logger.info("Or perhaps you have not set your DBURL environment variable")
         return
 
-    course_id = app.env.config.html_context.get('course_id', "unknown")
     chapters = Table('chapters', meta, autoload=True, autoload_with=engine)
     sub_chapters = Table('sub_chapters', meta, autoload=True, autoload_with=engine)
     questions = Table('questions', meta, autoload=True, autoload_with=engine)
     basecourse = app.config.html_context.get('basecourse',"unknown")
-    print("Cleaning up old chapters info")
-    engine.execute(chapters.delete().where(chapters.c.course_id == course_id))
+    dynamic_pages = app.config.html_context.get('dynamic_pages', False)
+    if dynamic_pages:
+        cname = basecourse
+    else:
+        cname = app.env.config.html_context.get('course_id', "unknown")
 
-    print("Populating the database with Chapter information")
+    logger.info("Cleaning up old chapters info for {}".format(cname))
+    sess.execute(chapters.delete().where(chapters.c.course_id == basecourse))
 
-    for chap in chaptitles:
+
+    logger.info("Populating the database with Chapter information")
+
+    chapnum = 1
+    for chapnum, chap in enumerate(chaptitles, start=1):
         # insert row for chapter in the chapter table and get the id
-        print(u"Adding chapter subchapter info for {}".format(chap))
+        logger.info(u"Adding chapter subchapter info for {}".format(chap))
         ins = chapters.insert().values(chapter_name=chaptitles.get(chap, chap),
-                                       course_id=course_id, chapter_label=chap)
-        res = engine.execute(ins)
+                                       course_id=cname, chapter_label=chap,
+                                       chapter_num=chapnum)
+        res = sess.execute(ins)
         currentRowId = res.inserted_primary_key[0]
-        for sub in subtitles[chap]:
+        for subchapnum, sub in enumerate(subtitles[chap], start=1):
             if (chap,sub) in skips:
                 skipreading = 'T'
             else:
@@ -72,8 +83,9 @@ def update_database(chaptitles, subtitles, skips, app):
             ins = sub_chapters.insert().values(sub_chapter_name=subtitles[chap][sub],
                                                chapter_id=str(currentRowId),
                                                sub_chapter_label=sub,
-                                               skipreading=skipreading)
-            engine.execute(ins)
+                                               skipreading=skipreading,
+                                               sub_chapter_num=subchapnum)
+            sess.execute(ins)
             # Three possibilities:
             # 1) The chapter and subchapter labels match existing, but the q_name doesn't match; because you changed
             # heading in a file.
@@ -88,21 +100,24 @@ def update_database(chaptitles, subtitles, skips, app):
                                                      questions.c.question_type == 'page',
                                                      questions.c.base_course == basecourse))
                                             )
-            res = engine.execute(sel).first()
+            res = sess.execute(sel).first()
             if res and ((res.name != q_name) or (res.chapter != chap) or (res.subchapter !=sub)):
                 # Something changed
                 upd = questions.update().where(questions.c.id == res['id']).values(name=q_name,
                                                                                    chapter = chap,
+                                                                                   from_source='T',
                                                                                    subchapter = sub)
-                engine.execute(upd)
+                sess.execute(upd)
             if not res:
                 # this is a new subchapter
                 ins = questions.insert().values(chapter=chap, subchapter=sub,
                                             question_type='page',
+                                            from_source='T',
                                             name=q_name,
                                             timestamp=datetime.datetime.now(),
                                             base_course=basecourse)
-                engine.execute(ins)
+                sess.execute(ins)
+
 
 
 def env_updated(app, env):
@@ -144,7 +159,7 @@ def env_updated(app, env):
                     chap_titles[chap_id] = title.astext()
                 else:
                     chap_titles[chap_id] = chap_id
-                    env.warn(docname, "Using a substandard chapter title")
+                    logger.warning(docname + " Using a substandard chapter title")
 
             if chap_id not in subchap_titles:
                 subchap_titles[chap_id] = OrderedDict()
