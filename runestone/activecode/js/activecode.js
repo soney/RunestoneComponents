@@ -7,6 +7,7 @@ var isMouseDown = false;
 document.onmousedown = function() { isMouseDown = true };
 document.onmouseup   = function() { isMouseDown = false };
 var edList = {};
+var allDburls = {};
 
 ActiveCode.prototype = new RunestoneBase();
 var socket, connection, doc;
@@ -2427,8 +2428,23 @@ SQLActiveCode.prototype.init = function(opts) {
             if (! self.dburl.startsWith("http")) {
                 self.dburl = window.location.protocol + '//' + window.location.host + self.dburl;
             }
-            var xhr = new XMLHttpRequest();
             $(self.runButton).attr('disabled','disabled')
+            if (! (self.dburl in allDburls)) {
+                allDburls[self.dburl] = {status: 'loading', xWaitFor: jQuery.Deferred() };
+            } else {
+                if (allDburls[self.dburl].status == 'loading') {
+                    allDburls[self.dburl].xWaitFor.done(function() {
+                        self.db = new SQL.Database(allDburls[self.dburl].db);
+                        $(self.runButton).removeAttr('disabled')
+                    });
+                    return;
+                }
+                self.db = new SQL.Database(allDburls[self.dburl].db);
+                $(self.runButton).removeAttr('disabled')
+                return;
+            }
+            var xhr = new XMLHttpRequest();
+
             // For example: https://github.com/lerocha/chinook-database/raw/master/ChinookDatabase/DataSources/Chinook_Sqlite.sqlite
             xhr.open('GET', self.dburl, true);
             xhr.responseType = 'arraybuffer';
@@ -2437,6 +2453,9 @@ SQLActiveCode.prototype.init = function(opts) {
                 var uInt8Array = new Uint8Array(xhr.response);
                 self.db = new SQL.Database(uInt8Array);
                 $(self.runButton).removeAttr('disabled')
+                allDburls[self.dburl].db = uInt8Array;
+                allDburls[self.dburl].status = 'ready';
+                allDburls[self.dburl].xWaitFor.resolve();
                 // contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
                 };
             xhr.send();
@@ -2526,7 +2545,11 @@ SQLActiveCode.prototype.autograde = function(result_table) {
         return s.indexOf('assert') > -1
     })
     for (let test of tests) {
-        [assert, loc, oper, expected] = test.split(/\s+/);
+        let wlist = test.split(/\s+/);
+        wlist.shift();
+        loc = wlist.shift()
+        oper = wlist.shift();
+        expected = wlist.join(' ');
         [row,col] = loc.split(',');
         result += this.testOneAssert(row, col, oper, expected, result_table);
         result += "\n"
@@ -2729,6 +2752,10 @@ $(document).ready(function() {
         for (k in edList) {
             edList[k].disableSaveLoad();
         }
+    } else {
+        for (k in edList) {
+            edList[k].enableSaveLoad();
+        }
     }
 
 });
@@ -2738,13 +2765,6 @@ if (typeof component_factory === 'undefined') {
 }
 component_factory['activecode'] = ACFactory.createActiveCodeFromOpts;
 
-$(document).bind("runestone:login", function() {
-    for (k in edList) {
-        if (edList.hasOwnProperty(k)) {
-            edList[k].enableSaveLoad();
-        }
-    }
-});
 
 // This seems a bit hacky and possibly brittle, but its hard to know how long it will take to
 // figure out the login/logout status of the user.  Sometimes its immediate, and sometimes its
