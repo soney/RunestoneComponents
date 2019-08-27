@@ -51,7 +51,11 @@
       </button>
 
       <div>
-        <a class="brand-logo" style='background: transparent url("{{pathto('_static/img/logo_small.png', 1)}}") no-repeat 0px 0px;' href="/{{appname}}/default/user/login">&nbsp; </a>
+        {% if minimal_outside_links != 'True' %}
+          <a class="brand-logo" style='background: transparent url("{{pathto('_static/img/logo_small.png', 1)}}") no-repeat 0px 0px;' href="/{{appname}}/default/user/login">&nbsp; </a>
+        {% else %}
+          <a class="brand-logo" style='background: transparent url("{{pathto('_static/img/logo_small.png', 1)}}") no-repeat 0px 0px;'>&nbsp;<span aria-label="logo" class="visuallyhidden">Runestone Logo</span> </a>
+        {% endif %}
         <a class="navbar-brand" href="{{ pathto(master_doc) }}" aria-label="index-page">
           {% if dynamic_pages == 'True' %}
             {% raw %}
@@ -72,6 +76,7 @@
         <li class="divider-vertical"></li>
 
         <!-- social media dropdown -->
+        {% if minimal_outside_links != 'True' %}
         <li class="dropdown">
           <a class="dropdown-toggle" href="#" data-toggle="dropdown">
             <i class="glyphicon glyphicon-globe" style="opacity: 0.9"><span aria-label="Social" class="visuallyhidden">Social</span></i>
@@ -103,6 +108,7 @@
               </li>
           </ul>
         </li>
+        {%- endif -%}
         <!-- end social media dropdown -->
 
         <li class="divider-vertical"></li>
@@ -151,14 +157,18 @@
             <li class="divider"></li>
             <li><a href='{{course_url}}/{{appname}}/assignments/practice'>Practice</a></li>
             <li class="divider"></li>
+            {% if minimal_outside_links != 'True' %}
             <li><a href='/{{appname}}/default/courses'>Change Course</a></li>
 			      <li class="divider"></li>
             <li id="ip_dropdown_link"><a href='{{course_url}}/{{appname}}/admin/index'>Instructor's Page</a></li>
+            {%- endif -%}
             <li><a href='{{ course_url }}/{{ appname }}/assignments/index'>Progress Page</a></li>
             <li class="divider"></li>
+            {% if minimal_outside_links != 'True' %}
             <li><a href="{{course_url}}/{{appname}}/default/user/profile" id="profilelink">Edit Profile</a></li>
             <li><a href="{{course_url}}/{{appname}}/default/user/change_password" id="passwordlink">Change Password</a></li>
             <li><a href="{{course_url}}/{{appname}}/default/user/register" id="registerlink">Register</a></li>
+            {%- endif -%}
             <li class='loginout'><a href='#'>Login</a></li> <!-- correct link populated by addNavbarLoginLink() -->
           </ul>
         </li>
@@ -174,6 +184,7 @@
 
         <li class="divider-vertical"></li>
 
+        {% if minimal_outside_links != 'True' %}
         <!-- help menu dropdown -->
         <li class="dropdown">
           <a class="dropdown-toggle" href="#" data-toggle="dropdown">
@@ -191,7 +202,7 @@
         <!-- end help menu dropdown -->
 
         <li class="divider-vertical"></li>
-
+      {% endif %}
       </ul>
 
       <ul class="nav navbar-nav">
@@ -268,6 +279,7 @@
 
 </script>
 
+{% if minimal_outside_links != 'True' %}
 <div id="fb-root"></div>
 <script>
   (function(d, s, id) {
@@ -278,6 +290,7 @@
     fjs.parentNode.insertBefore(js, fjs);
   }(document, 'script', 'facebook-jssdk'));
 </script>
+{% endif %}
 
 {% endblock %}
 
@@ -311,7 +324,9 @@
   <div class="container">
     <p class="pull-right">
       {% if use_services %}
+      {% if minimal_outside_links != 'True' %}
       <span id='numuserspan'></span><span class='loggedinuser'></span>
+      {% endif %}
       {% endif %}
       | <a href="#">Back to top</a>
       {% if theme_source_link_position == "footer" %}
@@ -341,7 +356,7 @@
 {% if appname == "runestone" %}
 <script type="text/javascript">
   var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-32029811-1']);
+  _gaq.push(['_setAccount', '{{ google_ga_account }}']);
   _gaq.push(['_trackPageview']);
 
   (function() {
@@ -350,7 +365,9 @@
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
 </script>
+{% if minimal_outside_links != 'True' %}
 <script async src="https://hypothes.is/embed.js"></script>
+{% endif %}
 
 {% endif %}
 
