@@ -112,15 +112,15 @@ class PageProgressBar {
         if(actDict) {
             this.activities = actDict;
         } else {
-            let activities = {}
+            let activities = {'page': 0};
             $(".runestone").each(function (idx, e) {
                 activities[e.firstElementChild.id] = 0;
             })
             this.activities = activities;
         }
         this.calculateProgress();
-        if (window.location.pathname.match(/.*(index.html|toctree.html|Exercises.html|Glossary.html)$/i)) {
-            $("#scprogresscontainer").hide()
+        if (window.location.pathname.match(/.*(index.html|toctree.html|Exercises.html|Glossary.html|search.html)$/i)) {
+            $("#scprogresscontainer").hide();
         }
         this.renderProgress()
     }
@@ -159,7 +159,10 @@ class PageProgressBar {
             let val = 100 * this.total / this.possible;
             $("#scprogresstotal").text(this.total);
             $("#scprogressposs").text(this.possible);
-            $("#subchapterprogress").progressbar("option","value", val)
+            $("#subchapterprogress").progressbar("option","value", val);
+            if (val == 100.0 && $("#completionButton").text().toLowerCase() === "mark as completed") {
+                $("#completionButton").click();
+            }
         }
     }
 
